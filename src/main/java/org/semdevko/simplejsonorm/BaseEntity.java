@@ -2,7 +2,7 @@ package org.semdevko.simplejsonorm;
 
 import org.semdevko.simplejsonorm.core.Entity;
 
-public class BaseEntity implements Entity {
+public abstract class BaseEntity implements Entity {
     protected int id;
 
     public int getId() {

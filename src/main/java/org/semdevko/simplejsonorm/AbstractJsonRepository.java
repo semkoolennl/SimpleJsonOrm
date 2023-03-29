@@ -6,10 +6,12 @@ import org.semdevko.simplejsonorm.core.Entity;
 import org.semdevko.simplejsonorm.core.Repository;
 import org.semdevko.simplejsonorm.core.JsonDatabase;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 abstract class AbstractJsonRepository<E extends Entity> implements Repository<E> {
@@ -27,7 +29,7 @@ abstract class AbstractJsonRepository<E extends Entity> implements Repository<E>
         loadEntitiesFromJson();
     }
 
-    public void save(E entity) {
+    public void save(E entity) throws IOException {
         if (entity.getId() == -1) {
             entity.setId(determineNextId());
         }
@@ -35,19 +37,23 @@ abstract class AbstractJsonRepository<E extends Entity> implements Repository<E>
         persist();
     }
 
-    public E findById(int id) {
-        return entities.get(id);
+    public Optional<E> findById(int id) {
+        E entity = entities.get(id);
+        if (entity == null) {
+            return Optional.empty();
+        }
+        return Optional.of(entity);
     }
 
     public ArrayList<E> findAll() {
         return new ArrayList<>(entities.values());
     }
 
-    public boolean delete(E entity) {
+    public boolean delete(E entity) throws IOException {
         return delete(entity.getId());
     }
 
-    public boolean delete(int id) {
+    public boolean delete(int id) throws IOException {
         if (!entities.containsKey(id)) {
             return false;
         }
@@ -56,7 +62,7 @@ abstract class AbstractJsonRepository<E extends Entity> implements Repository<E>
         return true;
     }
 
-    public void deleteAll() {
+    public void deleteAll() throws IOException {
         entities.clear();
         persist();
     }
@@ -88,7 +94,7 @@ abstract class AbstractJsonRepository<E extends Entity> implements Repository<E>
         return maxId + 1;
     }
 
-    private void persist() {
+    private void persist() throws IOException {
         jsonDB.saveJson(clazz.getName(), gson.toJson(entities.values()));
     }
 

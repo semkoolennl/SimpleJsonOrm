@@ -2,19 +2,20 @@ package org.semdevko.simplejsonorm;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.semdevko.simplejsonorm.core.JsonDatabase;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-public class JsonDatabase {
-    private final Logger LOG = Logger.getLogger(JsonDatabase.class.getName());
+public class DefaultJsonDatabase implements JsonDatabase {
+    private final Logger LOG = Logger.getLogger(DefaultJsonDatabase.class.getName());
     private final String filepath;
     private final Gson gson;
     private HashMap<String, String> data = new HashMap<>();
 
-    public JsonDatabase(String filepath) {
+    public DefaultJsonDatabase(String filepath) throws IOException {
         this.filepath = filepath;
         this.gson     = new Gson();
         initialize();
@@ -24,12 +25,12 @@ public class JsonDatabase {
         return data.get(key);
     }
 
-    public void saveJson(String key, String json) {
+    public void saveJson(String key, String json) throws IOException {
         data.put(key, json);
         try (Writer writer = new FileWriter(filepath)) {
             gson.toJson(data, writer);
         } catch (IOException e) {
-            LOG.severe("jsonDB save error: " + e.getMessage());
+            throw new IOException("jsonDB save error: " + e.getMessage());
         }
     }
 
@@ -37,7 +38,7 @@ public class JsonDatabase {
         return gson;
     }
 
-    private void initialize() {
+    private void initialize() throws IOException {
         createFileIfItDoesNotExist();
         try (Reader reader = new FileReader(filepath)) {
             Type typeOfT = TypeToken.getParameterized(HashMap.class, String.class, String.class).getType();
@@ -47,7 +48,7 @@ public class JsonDatabase {
         }
     }
 
-    private void createFileIfItDoesNotExist() {
+    private void createFileIfItDoesNotExist() throws IOException {
         File file = new File(filepath);
         if (file.exists()) {
             return;
@@ -58,15 +59,15 @@ public class JsonDatabase {
             if (!file.getParentFile().exists()) {
                 success = file.getParentFile().mkdirs();
                 if (!success) {
-                    LOG.severe("jsonDB createFile error: could not create parent directory");
+                    throw new IOException("jsonDB createFile error: could not create parent directory");
                 }
             }
             success = file.createNewFile();
             if (!success) {
-                LOG.severe("jsonDB createFile error: could not create file");
+                throw new IOException("jsonDB createFile error: could not create file");
             }
         } catch (IOException e) {
-            LOG.severe("jsonDB createFile error: " + e.getMessage());
+            throw new IOException("jsonDB createFile error: " + e.getMessage());
         }
     }
 }
